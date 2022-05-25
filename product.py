@@ -1,25 +1,25 @@
 import re
 from utils.unit_name_detect import get_unit_name_by_product_name
-from utils.size_material_detect import get_size_by_description, get_size_by_variant, get_material_by_description
-
+from utils.size_material_detect import get_size_by_description, get_size_by_variant_tiki, get_material_by_description
+from utils.html_cleaner import clear_html_tag
 
 class Product:
-    def __init__(self, name):
-        self.name = name
-        self.unit_name = get_unit_name_by_product_name(name)
+    def __init__(self, **kwargs):
+        self.name = kwargs.get("name", "")
+        self.unit_name = get_unit_name_by_product_name(self.name)
         self.id = None
         self.shop_id = None
         self.count = 0
         self.sold = 0
-        self.size = ""
-        self.material = ""
+        self.size = kwargs.get("size", "").strip()
+        self.material = kwargs.get("material", "")
         self.brand = "No Brand"
-        self.category_tree = []
+        self.category_tree = kwargs.get("category_tree", [])
         self.price = 0
-        self.origin = ""
+        self.origin = kwargs.get("origin", "")
         self.variations = ""  # json
         self.variation_raw = {}
-        self.description = ""
+        self.description = clear_html_tag(kwargs.get("description", ""))
 
     def get_category_str(self):
         return " > ".join(self.category_tree)
@@ -54,12 +54,13 @@ class Product:
     def get_size_clean(self):
         size = re.sub(r'(\<.+?\>|\n|\r|\t)', ' ', self.size)
         # size = re.sub(r'[\n\r\t]', ' || ', size)
+        size = size.strip()
         return size
 
     def get_size(self):
         if self.size:
             return self.size
-        size = get_size_by_variant(self.variations)
+        size = get_size_by_variant_tiki(self.variations)
         if not size:
             size = get_size_by_description(self.description)
         return size
@@ -105,6 +106,6 @@ def init_title_export_file():
 
 
 def init_tiki_export_file():
-    return "{}\t{}\t{}\t{}\t{}\t{}\n".format(
+    return "{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
         "Đơn vị", "Tên Sản Phẩm", "Loại mặt hàng", "Nhãn hiệu", "Xuất xứ", "Kích thước", "Chất liệu"
     )
